@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Calculator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#141e30,#243b55);font-family:Arial,sans-serif}
+.calculator{width:340px;padding:24px;background:white;border-radius:20px;box-shadow:0 15px 40px #0005}
+h2{text-align:center;color:#243b55}
+#display{width:100%;height:75px;margin-bottom:16px;padding:12px;border:none;border-radius:10px;background:#edf2f7;text-align:right;font-size:28px;color:#172033}
+.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button{height:55px;border:none;border-radius:12px;background:#e8edf3;color:#243b55;font-size:21px;cursor:pointer;transition:.15s}
+button:hover{filter:brightness(.92);transform:translateY(-2px)}
+.operator{background:#dbeafe;color:#1d4ed8}
+.clear{background:#fee2e2;color:#dc2626}
+.equals{background:#2563eb;color:white}
+.zero{grid-column:span 2}
+</style>
+</head>
+<body>
+<div class="calculator">
+<h2>Calculator</h2>
+<input id="display" value="0" readonly>
+<div class="buttons">
+<button class="clear" onclick="clearAll()">C</button>
+<button onclick="backspace()">⌫</button>
+<button class="operator" onclick="percent()">%</button>
+<button class="operator" onclick="chooseOperator('/')">÷</button>
+<button onclick="appendNumber('7')">7</button>
+<button onclick="appendNumber('8')">8</button>
+<button onclick="appendNumber('9')">9</button>
+<button class="operator" onclick="chooseOperator('*')">×</button>
+<button onclick="appendNumber('4')">4</button>
+<button onclick="appendNumber('5')">5</button>
+<button onclick="appendNumber('6')">6</button>
+<button class="operator" onclick="chooseOperator('-')">−</button>
+<button onclick="appendNumber('1')">1</button>
+<button onclick="appendNumber('2')">2</button>
+<button onclick="appendNumber('3')">3</button>
+<button class="operator" onclick="chooseOperator('+')">+</button>
+<button onclick="toggleSign()">+/−</button>
+<button class="zero" onclick="appendNumber('0')">0</button>
+<button onclick="appendNumber('.')">.</button>
+<button class="equals" onclick="calculate()">=</button>
+</div>
+</div>
+
+<script>
+const display = document.getElementById("display");
+
+let current = "0";
+let first = null;
+let op = null;
+let expression = "";
+let startNew = true;
+let resultShown = false;
+let lastOp = null;
+let lastNumber = null;
+
+function show(text) {
+    display.value = text;
+}
+
+function format(n) {
+    if (!Number.isFinite(n)) return "Error";
+    return String(Number(n.toPrecision(12)));
+}
+
+function apply(a, b, operator) {
+    switch (operator) {
+        case "+": return a + b;
+        case "-": return a - b;
+        case "*": return a * b;
+        case "/": return b === 0 ? NaN : a / b;
+        case "%": return b === 0 ? NaN : a % b;
+    }
+}
+
+function appendNumber(n) {
+    if (current === "Error") clearAll();
+
+    if (resultShown && op === null) {
+        current = n === "." ? "0." : n;
+        expression = current;
+        resultShown = false;
+        startNew = false;
+        lastOp = null;
+        lastNumber = null;
+        show(expression);
+        return;
+    }
+
+    if (startNew) {
+        current = n === "." ? "0." : n;
+        startNew = false;
+    } else {
+        if (n === "." && current.includes(".")) return;
+        if (current === "0" && n !== ".") current = n;
+        else current += n;
+    }
+
+    expression = op !== null
+        ? format(first) + " " + opSymbol(op) + " " + current
+        : current;
+
+    show(expression);
+}
+
+function opSymbol(operator) {
+    if (operator === "*") return "×";
+    if (operator === "/") return "÷";
+    return operator;
+}
+
+function chooseOperator(nextOp) {
+    if (current === "Error") return;
+
+    if (op !== null && !startNew) {
+        current = format(apply(first, Number(current), op));
+        if (current === "Error") {
+            show(current);
+            clearAll(false);
+            return;
+        }
+    } else if (resultShown) {
+        current = String(Number(current));
+    }
+
+    first = Number(current);
+    op = nextOp;
+    startNew = true;
+    resultShown = false;
+    expression = format(first) + " " + opSymbol(op);
+    show(expression);
+}
+
+function calculate() {
+    if (current === "Error") return;
+
+    if (op !== null && !startNew) {
+        const second = Number(current);
+        const usedOp = op;
+        const left = first;
+
+        expression = format(left) + " " + opSymbol(usedOp) + " " +
+                     format(second) + " =";
+
+        current = format(apply(left, second, usedOp));
+        lastOp = usedOp;
+        lastNumber = second;
+        first = null;
+        op = null;
+        startNew = true;
+        resultShown = true;
+        show(current);
+    } else if (resultShown && lastOp !== null) {
+        current = format(apply(Number(current), lastNumber, lastOp));
+        show(current);
+    }
+}
+
+function clearAll(updateDisplay = true) {
+    current = "0";
+    first = null;
+    op = null;
+    expression = "";
+    startNew = true;
+    resultShown = false;
+    lastOp = null;
+    lastNumber = null;
+    if (updateDisplay) show("0");
+}
+
+function backspace() {
+    if (startNew || resultShown || current === "Error") {
+        clearAll();
+        return;
+    }
+
+    current = current.length > 1 ? current.slice(0, -1) : "0";
+    expression = op !== null
+        ? format(first) + " " + opSymbol(op) + " " + current
+        : current;
+    show(expression);
+}
+
+function toggleSign() {
+    if (startNew || current === "Error") return;
+    current = format(-Number(current));
+    expression = op !== null
+        ? format(first) + " " + opSymbol(op) + " " + current
+        : current;
+    show(expression);
+}
+
+function percent() {
+    if (current === "Error" || startNew) return;
+    current = format(Number(current) / 100);
+    expression = op !== null
+        ? format(first) + " " + opSymbol(op) + " " + current
+        : current;
+    show(expression);
+}
+
+document.addEventListener("keydown", function(e) {
+    if (/^[0-9.]$/.test(e.key)) appendNumber(e.key);
+    else if (["+", "-", "*", "/"].includes(e.key)) chooseOperator(e.key);
+    else if (e.key === "Enter" || e.key === "=") {
+        e.preventDefault();
+        calculate();
+    }
+    else if (e.key === "Escape" || e.key === "Delete") clearAll();
+    else if (e.key === "Backspace") backspace();
+});
+</script>
+</body>
+</html>
