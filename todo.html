@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List Application</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 450px;
+    max-width: 95%;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px #0004;
+}
+
+h1 {
+    text-align: center;
+    color: #243b55;
+    margin-top: 0;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #2563eb;
+}
+
+button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.add-btn {
+    background: #2563eb;
+    color: white;
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+button:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.task-text {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #243b55;
+}
+
+.completed .task-text {
+    text-decoration: line-through;
+    color: #16a34a;
+}
+
+.task-checkbox {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.delete-btn {
+    flex-shrink: 0;
+}
+
+#message {
+    text-align: center;
+    color: #64748b;
+    margin-top: 15px;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>My To-Do List</h1>
+
+    <div class="input-area">
+        <input type="text" id="taskInput"
+               placeholder="Enter a new task">
+        <button class="add-btn" onclick="addTask()">Add</button>
+    </div>
+
+    <ul id="taskList"></ul>
+
+    <p id="message">No tasks added yet.</p>
+</div>
+
+<script>
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const message = document.getElementById("message");
+
+function updateMessage() {
+    message.textContent = taskList.children.length === 0
+        ? "No tasks added yet."
+        : taskList.querySelectorAll(".completed").length +
+          " of " + taskList.children.length + " tasks completed.";
+}
+
+function addTask() {
+    const task = taskInput.value.trim();
+
+    if (task === "") {
+        taskInput.focus();
+        return;
+    }
+
+    const li = document.createElement("li");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "task-checkbox";
+    checkbox.onchange = function() {
+        updateTask(this);
+    };
+
+    const span = document.createElement("span");
+    span.className = "task-text";
+    span.textContent = task;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.className = "delete-btn";
+    deleteButton.onclick = function() {
+        deleteTask(this);
+    };
+
+    li.appendChild(checkbox);
+    li.appendChild(span);
+    li.appendChild(deleteButton);
+
+    taskList.appendChild(li);
+
+    taskInput.value = "";
+    taskInput.focus();
+
+    updateMessage();
+}
+
+function updateTask(checkbox) {
+    const li = checkbox.parentElement;
+
+    if (checkbox.checked) {
+        li.classList.add("completed");
+    } else {
+        li.classList.remove("completed");
+    }
+
+    updateMessage();
+}
+
+function deleteTask(button) {
+    button.parentElement.remove();
+    updateMessage();
+}
+
+taskInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        addTask();
+    }
+});
+</script>
+
+</body>
+</html>
